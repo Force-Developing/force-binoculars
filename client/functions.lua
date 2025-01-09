@@ -224,7 +224,8 @@ function Binoculars:InitKeybinds()
   for action, value in pairs(Config.Controls) do
     local name = "force_binoculars_" .. action .. "3"
     -- Add spaces between uppercase letters and capitalize first letter
-    local desc = action:gsub("(%u)", " %1"):gsub("^%s*(.)", string.upper):gsub("^%s+", "")
+    -- local desc = action:gsub("(%u)", " %1"):gsub("^%s*(.)", string.upper):gsub("^%s+", "")
+    local desc = locale(action)
     local func = self.KeyAction[action]
 
     self.cache.keybinds[action] = lib.addKeybind({

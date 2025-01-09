@@ -8,8 +8,9 @@ function Utils:InitCacheButtons(useModes)
     if (k == "previous" or k == "next") and (useModes == nil or useModes == false) or not Config.UseModes then
       goto continue
     end
-    local calcText = k:gsub("(%u)", " %1"):gsub("^%s*(.)", string.upper):gsub("^%s+", "")
-    local text = calcText
+    -- local calcText = k:gsub("(%u)", " %1"):gsub("^%s*(.)", string.upper):gsub("^%s+", "")
+    -- local text = calcText
+    local text = locale(k)
     self.cachedButtons[v.sort or #self.cachedButtons + 1] = {
       text = text,
       key = "~" .. v.name .. "~",

@@ -1,1 +1,7 @@
-{}
+{
+  "previous": "Föregående",
+  "next": "Nästa",
+  "exit": "Tillbaka",
+  "zoomIn": "Zooma in",
+  "zoomOut": "Zooma ut"
+}

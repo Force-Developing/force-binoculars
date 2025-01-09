@@ -1,1 +1,7 @@
-{}
+{
+  "previous": "Vorige",
+  "next": "Volgende",
+  "exit": "Terug",
+  "zoomIn": "Inzoomen",
+  "zoomOut": "Uitzoomen"
+}
