@@ -8,6 +8,7 @@ Config.FrameworkResource = "auto"             -- Resource name for the framework
 Config.Item = "binoculars"                    -- Item name, set to false to disable item registration
 Config.EnhancedItem = "binoculars_modes"      -- Enhanced item name, set to false to disable item registration
 Config.Command = "binoculars"                 -- Command name, set to false to disable command registration
+Config.EnhancedCommand = "binoculars_modes"   -- Enhanced command name, set to false to disable command registration
 
 Config.CameraOffset = vector3(0.2, 0.2, 0.95) -- Adjusted to be more like holding binoculars
 Config.CameraRotationClamp = {

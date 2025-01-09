@@ -21,9 +21,7 @@ function Binoculars:InitMain()
   self:Debug("info", "Initializing main thread")
 
   self:InitKeybinds()
-  if Config.Command then
-    self:InitCommands()
-  end
+  self:InitCommands()
 
   self:Debug("info", "Main thread initialized")
 end
@@ -264,10 +262,19 @@ end
 function Binoculars:InitCommands()
   self:Debug("info", "Initializing commands")
 
-  RegisterCommand(Config.Command, function()
-    self:Debug("info", "Toggling binoculars")
-    self:ToggleBinoculars(nil, false)
-  end, false)
+  if Config.Command then
+    RegisterCommand(Config.Command, function()
+      self:Debug("info", "Toggling binoculars")
+      self:ToggleBinoculars(nil, false)
+    end, false)
+  end
+
+  if Config.EnhancedCommand then
+    RegisterCommand(Config.EnhancedCommand, function()
+      self:Debug("info", "Toggling binoculars with modes")
+      self:ToggleBinoculars(nil, true)
+    end, false)
+  end
 
   self:Debug("info", "Commands initialized")
 end
@@ -293,6 +300,10 @@ end)
 exports("DeactivateBinoculars", function()
   Binoculars:Debug("info", "Deactivating binoculars")
   Binoculars:DeactivateBinoculars()
+end)
+
+exports("IsBinocularsActive", function()
+  return Binoculars.inAction
 end)
 
 exports("GetBinocularsState", function()
