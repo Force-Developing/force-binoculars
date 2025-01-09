@@ -22,6 +22,7 @@ server_scripts {
     "server/events.lua",
     "server/functions.lua",
     "server/main.lua",
+    "server/custom/*.lua",
 }
 
 client_scripts {

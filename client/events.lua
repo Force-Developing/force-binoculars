@@ -7,3 +7,8 @@ AddEventHandler("onResourceStop", function(resource)
     Binoculars:ToggleBinoculars(false)
   end
 end)
+
+RegisterNetEvent("force-binoculars:client:toggleBinoculars")
+AddEventHandler("force-binoculars:client:toggleBinoculars", function(toggle, useModes)
+  Binoculars:ToggleBinoculars(toggle, useModes)
+end)

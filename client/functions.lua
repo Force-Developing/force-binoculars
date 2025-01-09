@@ -270,3 +270,21 @@ exports("ToggleBinoculars", function(...)
   Binoculars:Debug("info", "Toggling binoculars: " .. (Binoculars.inAction and " off" or " on"))
   Binoculars:ToggleBinoculars(...)
 end)
+
+exports("ActivateBinoculars", function(...)
+  Binoculars:Debug("info", "Activating binoculars")
+  Binoculars:ActivateBinoculars(...)
+end)
+
+exports("DeactivateBinoculars", function()
+  Binoculars:Debug("info", "Deactivating binoculars")
+  Binoculars:DeactivateBinoculars()
+end)
+
+exports("GetBinocularsState", function()
+  return Binoculars.inAction, Binoculars.mode, Binoculars.zoom
+end)
+
+exports("GetBinocularsState", function()
+  return Binoculars.inAction
+end)
