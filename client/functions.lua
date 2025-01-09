@@ -4,11 +4,12 @@ Binoculars = {
   camera = nil,
   camCoords = vector3(0.0, 0.0, 0.0),
   camRotation = vector3(0.0, 0.0, 0.0),
-  zoom = 5.0, -- Set a reasonable initial zoom value
+  zoom = 5.0,
   mode = 1,
   scaleform = nil,
   camscaleform = nil,
   useModes = nil,
+  stateTimer = nil,
 
   cache = {
     keybinds = {},
@@ -86,38 +87,50 @@ function Binoculars:ActivateBinoculars(useModes)
   SetTimecycleModifierStrength(self.zoom)
   TaskStartScenarioInPlace(playerPed, Config.Scenario, 0, true)
 
-  CreateThread(function()
-    while self.inAction do
-      Wait(4)
-      -- Binoculars scaleform (centered)
-      self.scaleform = lib.requestScaleformMovie('BINOCULARS')
-      BeginScaleformMovieMethod(self.scaleform, 'SET_CAM_LOGO')
-      ScaleformMovieMethodAddParamInt(0)
-      EndScaleformMovieMethod()
-      DrawScaleformMovie(self.scaleform, 0.5, 0.5, 1.0, 1.0, 255, 255, 255, 255, 0)
+  self:StartStateThread()
+end
 
-      -- Security camera scaleform (top left corner)
-      if (useModes ~= nil and useModes ~= false) and Config.UseModes then
-        self.camscaleform = lib.requestScaleformMovie(Config.BinocularsHud)
-        BeginScaleformMovieMethod(self.camscaleform, 'SET_CAM_LOGO')
-        ScaleformMovieMethodAddParamInt(0)
-        EndScaleformMovieMethod()
-        -- Position: x=0.15 (left side), y=0.15 (top), scale=0.4 (smaller)
-        DrawScaleformMovie(self.camscaleform, Config.HudPos.x, Config.HudPos.y, Config.HudPos.w, Config.HudPos.h, 255,
-          255,
-          255, 255, 0)
+function Binoculars:StartStateThread()
+  if self.stateTimer then return end
+
+  self.stateTimer = SetTimeout(0, function()
+    CreateThread(function()
+      while self.inAction do
+        if not self.camera then break end
+
+        -- Update scaleforms
+        self:UpdateScaleforms()
+
+        -- Handle controls
+        DisableHudAndControls()
+        self:UpdateCamRotation()
+
+        Wait(0)
       end
-
-      -- Buttons scaleform (bottom)
-      Utils:ShowHelpButtons(useModes)
-
-      -- Disable controls and HUD
-      DisableHudAndControls()
-
-      -- Handle camera rotation
-      Binoculars:UpdateCamRotation()
-    end
+      self.stateTimer = nil
+    end)
   end)
+end
+
+function Binoculars:UpdateScaleforms()
+  -- Binoculars scaleform (centered)
+  self.scaleform = lib.requestScaleformMovie('BINOCULARS')
+  BeginScaleformMovieMethod(self.scaleform, 'SET_CAM_LOGO')
+  ScaleformMovieMethodAddParamInt(0)
+  EndScaleformMovieMethod()
+  DrawScaleformMovie(self.scaleform, 0.5, 0.5, 1.0, 1.0, 255, 255, 255, 255, 0)
+  -- Security camera scaleform
+  if (self.useModes ~= nil and self.useModes ~= false) and Config.UseModes then
+    self.camscaleform = lib.requestScaleformMovie(Config.BinocularsHud)
+    BeginScaleformMovieMethod(self.camscaleform, 'SET_CAM_LOGO')
+    ScaleformMovieMethodAddParamInt(0)
+    EndScaleformMovieMethod()
+    DrawScaleformMovie(self.camscaleform, Config.HudPos.x, Config.HudPos.y, Config.HudPos.w, Config.HudPos.h, 255, 255,
+      255, 255, 0)
+  end
+
+  -- Buttons scaleform
+  Utils:ShowHelpButtons(self.useModes)
 end
 
 function Binoculars:DeactivateBinoculars()
@@ -284,8 +297,4 @@ end)
 
 exports("GetBinocularsState", function()
   return Binoculars.inAction, Binoculars.mode, Binoculars.zoom
-end)
-
-exports("GetBinocularsState", function()
-  return Binoculars.inAction
 end)
