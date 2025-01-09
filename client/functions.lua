@@ -138,7 +138,6 @@ function Binoculars:DeactivateBinoculars()
   DestroyCam(self.camera, false)
 
   ClearTimecycleModifier()
-  ClearPedTasks(PlayerPedId())
 
   SetScaleformMovieAsNoLongerNeeded(self.scaleform)
   if self.camscaleform then
@@ -147,6 +146,10 @@ function Binoculars:DeactivateBinoculars()
 
   SetNightvision(false)
   SetSeethrough(false)
+
+  local playerPed = PlayerPedId()
+  ClearPedTasks(playerPed)
+  ClearPedSecondaryTask(playerPed)
 
   Utils.cachedButtons = nil
 end
