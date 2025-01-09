@@ -22,7 +22,8 @@ function Utils:InitCacheButtons(useModes)
 end
 
 function Utils:ShowHelpButtons(useModes)
-  local buttons = Utils.cachedButtons or Utils:InitCacheButtons(useModes)
+  local buttons = self.cachedButtons or self:InitCacheButtons(useModes)
+
   if not buttons then return end
   local scaleform = RequestScaleformMovie('instructional_buttons')
 

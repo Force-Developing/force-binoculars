@@ -1,7 +1,7 @@
 Config = {}
 
 Config.Debug = true
-Config.Locale = "en"                          -- ar, de, en, es, fr, nl, pl, pt, ru, se
+Config.Locale = "en"                          -- ar, de, en, es, fr, nl, pl, pt, ru, sv
 Config.Framework = "auto"                     -- auto, esx, qbcore, qbx, custom
 Config.FrameworkResource = "auto"             -- Resource name for the framework
 

@@ -147,6 +147,8 @@ function Binoculars:DeactivateBinoculars()
 
   SetNightvision(false)
   SetSeethrough(false)
+
+  Utils.cachedButtons = nil
 end
 
 function Binoculars:UpdateCamRotation()

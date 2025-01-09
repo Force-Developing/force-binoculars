@@ -1,7 +1,7 @@
 lib.versionCheck('Force-Developing/force-binoculars')
 
 local latestVersionUrl =
-"https://gist.githubusercontent.com/Force-Developing/ee739a3263bc3421257d901e53e27b10/raw/force-binoculars"
+"https://gist.githubusercontent.com/Force-Developing/3ef6cb4066ebc648b19dc43b47b4a23a/raw/b1b4a43cc1078309c71f1da8851009469eb46075/force-binoculars"
 local currentVersion = GetResourceMetadata(GetCurrentResourceName(), 'version', 0)
 
 local function versionCheck()
