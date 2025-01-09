@@ -1,6 +1,7 @@
 # force-binoculars
 
 A more advanced binoculars resource then normal for you're FiveM server. It Contains multiple vision modes and configuration options.
+[Documentation](https://force-developing.gitbook.io/docs/free-resources/force-binoculars)
 
 ## Features
 
