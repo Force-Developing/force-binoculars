@@ -17,10 +17,12 @@ A more advanced binoculars resource then normal for you're FiveM server. It Cont
 
 ### Preview
 
+<div align="center" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
 <img src="https://i.gyazo.com/36b2623bfa912d4e055bf8864ef45eb6.jpg" alt="Enhanced Binocular" width="49%"/>
 <img src="https://i.gyazo.com/b614108b7fc1219aa9a79962ba3b61a9.jpg" alt="Enhanced Binocular" width="49%"/>
 <img src="https://i.gyazo.com/3bffa24b6df3ec0c7ec799c305e860ab.jpg" alt="Enhanced Binocular" width="49%"/>
 <img src="https://i.gyazo.com/090f27d549aea6c3d6379eaa68c9afde.jpg" alt="Enhanced Binocular" width="49%"/>
+</div>
 
 ## Dependencies
 
