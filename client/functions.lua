@@ -112,7 +112,9 @@ end
 
 function Binoculars:UpdateScaleforms()
   -- Binoculars scaleform (centered)
-  self.scaleform = lib.requestScaleformMovie('BINOCULARS')
+  if not HasScaleformMovieLoaded(self.scaleform) then
+    self.scaleform = lib.requestScaleformMovie('BINOCULARS')
+  end
   BeginScaleformMovieMethod(self.scaleform, 'SET_CAM_LOGO')
   ScaleformMovieMethodAddParamInt(0)
   EndScaleformMovieMethod()
