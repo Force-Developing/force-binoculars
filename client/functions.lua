@@ -48,8 +48,7 @@ end
 function Binoculars:ActivateBinoculars(useModes)
   Debug("info", "Activating binoculars")
 
-  local playerPed = PlayerPedId()
-  if not DoesEntityExist(playerPed) then
+  if not DoesEntityExist(cache.ped) then
     Debug("error", "Failed to get player ped")
     return false
   end
@@ -57,14 +56,14 @@ function Binoculars:ActivateBinoculars(useModes)
   self.useModes = useModes
   ToggleHud(false)
 
-  local success = self:SetupCamera(playerPed)
+  local success = self:SetupCamera(cache.ped)
   if not success then
     Debug("error", "Failed to setup camera")
     return false
   end
 
   self:InitializeEffects()
-  TaskStartScenarioInPlace(playerPed, Config.Scenario, 0, true)
+  TaskStartScenarioInPlace(cache.ped, Config.Scenario, 0, true)
   self:StartStateThread()
 
   return true
@@ -168,9 +167,8 @@ function Binoculars:DeactivateBinoculars()
   SetNightvision(false)
   SetSeethrough(false)
 
-  local playerPed = PlayerPedId()
-  ClearPedTasks(playerPed)
-  ClearPedSecondaryTask(playerPed)
+  ClearPedTasks(cache.ped)
+  ClearPedSecondaryTask(cache.ped)
 
   Utils.cachedButtons = nil
 end
@@ -193,7 +191,7 @@ function Binoculars:UpdateCamRotation()
 
     self.camRotation = vector3(newX, 0.0, newZ)
     SetCamRot(self.camera, self.camRotation.x, 0.0, self.camRotation.z, 2)
-    SetEntityRotation(PlayerPedId(), 0.0, 0.0, self.camRotation.z, 2, true)
+    SetEntityRotation(cache.ped, 0.0, 0.0, self.camRotation.z, 2, true)
   end
 end
 
