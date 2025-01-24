@@ -37,3 +37,22 @@ function InitFramework()
   end
   Debug("info", "Framework initialized: " .. Config.Framework.name)
 end
+
+function ToggleHud(toggle)
+  local huds = {
+    { name = "vms_hud",   export = "Display" },
+    { name = "esx_hud",   export = "HudToggle" },
+    { name = "mHud",      eventOn = "mHud:ShowHud", eventOff = "mHud:HideHud" },
+    { name = "17mov_Hud", export = "ToggleDisplay" },
+  }
+
+  for _, hud in ipairs(huds) do
+    if IsResourceStartingOrStarted(hud.name) then
+      if hud.export then
+        exports[hud.name][hud.export](toggle)
+      elseif hud.eventOn and hud.eventOff then
+        TriggerEvent(toggle and hud.eventOn or hud.eventOff)
+      end
+    end
+  end
+end

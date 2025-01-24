@@ -18,33 +18,28 @@ Binoculars = {
 }
 
 function Binoculars:InitMain()
-  self:Debug("info", "Initializing main thread")
+  Debug("info", "Initializing main thread")
 
   self:InitKeybinds()
   self:InitCommands()
 
-  self:Debug("info", "Main thread initialized")
+  Debug("info", "Main thread initialized")
 end
+
+local hudComponents = { 19, 1, 2, 3, 4, 13, 11, 12, 15, 18 }
 
 local function DisableHudAndControls()
   HideHudAndRadarThisFrame()
-  HideHudComponentThisFrame(19) -- weapon wheel
-  HideHudComponentThisFrame(1)  -- Wanted Stars
-  HideHudComponentThisFrame(2)  -- Weapon icon
-  HideHudComponentThisFrame(3)  -- Cash
-  HideHudComponentThisFrame(4)  -- MP CASH
-  HideHudComponentThisFrame(13) -- Cash Change
-  HideHudComponentThisFrame(11) -- Floating Help Text
-  HideHudComponentThisFrame(12) -- more floating help text
-  HideHudComponentThisFrame(15) -- Subtitle Text
-  HideHudComponentThisFrame(18) -- Game Stream
+  for _, component in ipairs(hudComponents) do
+    HideHudComponentThisFrame(component)
+  end
 
   DisableAllControlActions(2)
 end
 
 function Binoculars:ToggleBinoculars(toggle, useModes)
   self.inAction = toggle or not self.inAction
-  self:Debug("info", "Binoculars toggled: " .. (self.inAction and "on" or "off"))
+  Debug("info", "Binoculars toggled: " .. (self.inAction and "on" or "off"))
 
   if self.inAction then
     self:ActivateBinoculars(useModes)
@@ -54,8 +49,9 @@ function Binoculars:ToggleBinoculars(toggle, useModes)
 end
 
 function Binoculars:ActivateBinoculars(useModes)
-  self:Debug("info", "Activating binoculars")
+  Debug("info", "Activating binoculars")
   self.useModes = useModes
+  ToggleHud(false)
 
   local playerPed = PlayerPedId()
   self.camRotation = -GetGameplayCamRot(2)
@@ -134,7 +130,8 @@ function Binoculars:UpdateScaleforms()
 end
 
 function Binoculars:DeactivateBinoculars()
-  self:Debug("info", "Deactivating binoculars")
+  Debug("info", "Deactivating binoculars")
+  ToggleHud(true)
 
   RenderScriptCams(false, false, 0, true, true)
   DestroyCam(self.camera, false)
@@ -200,7 +197,7 @@ function Binoculars:UpdateCamMode()
     SetSeethrough(false)
   end
 
-  self:Debug("info", "Updated binoculars")
+  Debug("info", "Updated binoculars")
 end
 
 function Binoculars:UpdateCamZoom()
@@ -208,7 +205,7 @@ function Binoculars:UpdateCamZoom()
 
   local fov = (45.0 / self.zoom) * 2.0 -- Adjusted FOV calculation
   SetCamFov(self.camera, fov)
-  self:Debug("info", "Updated binoculars zoom: " .. fov)
+  Debug("info", "Updated binoculars zoom: " .. fov)
 end
 
 Binoculars.KeyAction = {
@@ -259,31 +256,27 @@ function Binoculars:InitKeybinds()
         end
         func()
 
-        self:Debug("info", "Mode: " .. Config.Modes[self.mode].name)
-        self:Debug("info", "Zoom: " .. self.zoom)
+        Debug("info", "Mode: " .. Config.Modes[self.mode].name)
+        Debug("info", "Zoom: " .. self.zoom)
       end,
     })
   end
 end
 
 function Binoculars:InitCommands()
-  self:Debug("info", "Initializing commands")
+  Debug("info", "Initializing commands")
 
-  if Config.Command then
-    RegisterCommand(Config.Command, function()
-      self:Debug("info", "Toggling binoculars")
-      self:ToggleBinoculars(nil, false)
-    end, false)
+  for _, command in pairs(Config.Binoculars) do
+    if command.command then
+      self.cache.commands[command.command] = command.modes
+      RegisterCommand(command.command, function()
+        Debug("info", "Toggling binoculars")
+        self:ToggleBinoculars(nil, command.modes)
+      end, false)
+    end
   end
 
-  if Config.EnhancedCommand then
-    RegisterCommand(Config.EnhancedCommand, function()
-      self:Debug("info", "Toggling binoculars with modes")
-      self:ToggleBinoculars(nil, true)
-    end, false)
-  end
-
-  self:Debug("info", "Commands initialized")
+  Debug("info", "Commands initialized")
 end
 
 exports("ToggleBinoculars", function(...)

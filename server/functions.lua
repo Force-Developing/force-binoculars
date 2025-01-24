@@ -9,17 +9,12 @@ function Binoculars:InitMain()
 end
 
 function Binoculars:InitItems()
-  if Config.Item then
-    Debug("info", "Registering item: " .. Config.Item)
-    RegisterUsableItem(Config.Item, function(source)
-      TriggerClientEvent("force-binoculars:client:toggleBinoculars", source, nil, false)
-    end)
-  end
-
-  if Config.EnhancedItem then
-    Debug("info", "Registering item: " .. Config.EnhancedItem)
-    RegisterUsableItem(Config.EnhancedItem, function(source)
-      TriggerClientEvent("force-binoculars:client:toggleBinoculars", source, nil, true)
-    end)
+  for _, item in ipairs(Config.Binoculars) do
+    if item.item then
+      Debug("info", "Registering item: " .. item.item)
+      RegisterUsableItem(item.item, function(source)
+        TriggerClientEvent("force-binoculars:client:toggleBinoculars", source, nil, item.modes)
+      end)
+    end
   end
 end

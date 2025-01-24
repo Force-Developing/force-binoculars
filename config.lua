@@ -12,12 +12,12 @@ Config.Binoculars = {
   {
     item = "binoculars",    -- item name or false to disable
     command = "binoculars", -- command name or false to disable
-    type = "default",       -- modes: (default)
+    modes = false,          -- modes: (default)
   },
   {
     item = "binoculars_modes",    -- item name or false to disable
     command = "binoculars_modes", -- command name or false to disable
-    type = "modes",               -- modes: (default, nightvision, thermalvision)
+    modes = true,                 -- modes: (default, nightvision, thermalvision)
   }
 }
 
