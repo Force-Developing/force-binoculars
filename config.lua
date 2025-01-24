@@ -1,6 +1,6 @@
 Config = {}
 
-Config.Debug = true
+Config.Debug = false -- Default to false in production
 Config.Locale = "en" -- ar, de, en, es, fr, nl, pl, pt, ru, sv
 
 Config.Framework = {

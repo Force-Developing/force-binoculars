@@ -1,6 +1,5 @@
 Binoculars = {
   inAction = false,
-
   camera = nil,
   camCoords = vector3(0.0, 0.0, 0.0),
   camRotation = vector3(0.0, 0.0, 0.0),
@@ -9,12 +8,10 @@ Binoculars = {
   scaleform = nil,
   camscaleform = nil,
   useModes = nil,
-  stateTimer = nil,
-
   cache = {
     keybinds = {},
     commands = {}
-  }
+  },
 }
 
 function Binoculars:InitMain()
@@ -50,24 +47,56 @@ end
 
 function Binoculars:ActivateBinoculars(useModes)
   Debug("info", "Activating binoculars")
+
+  local playerPed = PlayerPedId()
+  if not DoesEntityExist(playerPed) then
+    Debug("error", "Failed to get player ped")
+    return false
+  end
+
   self.useModes = useModes
   ToggleHud(false)
 
-  local playerPed = PlayerPedId()
-  self.camRotation = -GetGameplayCamRot(2)
+  local success = self:SetupCamera(playerPed)
+  if not success then
+    Debug("error", "Failed to setup camera")
+    return false
+  end
 
-  self.camCoords = GetOffsetFromEntityInWorldCoords(playerPed, Config.CameraOffset.x, Config.CameraOffset.y,
-    Config.CameraOffset.z)
+  self:InitializeEffects()
+  TaskStartScenarioInPlace(playerPed, Config.Scenario, 0, true)
+  self:StartStateThread()
+
+  return true
+end
+
+function Binoculars:SetupCamera(playerPed)
+  self.camRotation = -GetGameplayCamRot(2)
+  self.camCoords = GetOffsetFromEntityInWorldCoords(playerPed,
+    Config.CameraOffset.x,
+    Config.CameraOffset.y,
+    Config.CameraOffset.z
+  )
 
   self.zoom = Config.Modes[self.mode].minZoom
   local fov = (45.0 / self.zoom) * 2.0
-  self.camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", self.camCoords.x, self.camCoords.y, self.camCoords.z,
-    self.camRotation.x,
-    self.camRotation.y, self.camRotation.z,
-    fov, false, 2)
+
+  self.camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA",
+    self.camCoords.x, self.camCoords.y, self.camCoords.z,
+    self.camRotation.x, self.camRotation.y, self.camRotation.z,
+    fov, false, 2
+  )
+
+  if not DoesCamExist(self.camera) then
+    return false
+  end
+
   SetCamActive(self.camera, true)
   RenderScriptCams(true, false, 0, true, true)
+  return true
+end
 
+function Binoculars:InitializeEffects()
   SetTimecycleModifier("default")
   SetTimecycleModifierStrength(0.0)
 
@@ -79,31 +108,24 @@ function Binoculars:ActivateBinoculars(useModes)
   SetTimecycleModifierStrength(1.0)
 
   SetTimecycleModifierStrength(self.zoom)
-  TaskStartScenarioInPlace(playerPed, Config.Scenario, 0, true)
-
-  self:StartStateThread()
 end
 
 function Binoculars:StartStateThread()
-  if self.stateTimer then return end
+  CreateThread(function()
+    while self.inAction do
+      if not self.camera then break end
 
-  self.stateTimer = SetTimeout(0, function()
-    CreateThread(function()
-      while self.inAction do
-        if not self.camera then break end
+      self:UpdateState()
 
-        -- Update scaleforms
-        self:UpdateScaleforms()
-
-        -- Handle controls
-        DisableHudAndControls()
-        self:UpdateCamRotation()
-
-        Wait(0)
-      end
-      self.stateTimer = nil
-    end)
+      Wait(4)
+    end
   end)
+end
+
+function Binoculars:UpdateState()
+  self:UpdateScaleforms()
+  self:UpdateCamRotation()
+  DisableHudAndControls()
 end
 
 function Binoculars:UpdateScaleforms()
@@ -203,7 +225,7 @@ end
 function Binoculars:UpdateCamZoom()
   if not self.inAction then return end
 
-  local fov = (45.0 / self.zoom) * 2.0 -- Adjusted FOV calculation
+  local fov = (45.0 / self.zoom) * 2.0
   SetCamFov(self.camera, fov)
   Debug("info", "Updated binoculars zoom: " .. fov)
 end
@@ -221,12 +243,12 @@ Binoculars.KeyAction = {
   end,
   zoomIn = function()
     Debug("info", "Zoom in")
-    Binoculars.zoom = math.min(Config.Modes[Binoculars.mode].maxZoom, Binoculars.zoom + 0.5) -- Changed increment to 0.5
+    Binoculars.zoom = math.min(Config.Modes[Binoculars.mode].maxZoom, Binoculars.zoom + 0.5)
     Binoculars:UpdateCamZoom()
   end,
   zoomOut = function()
     Debug("info", "Zoom out")
-    Binoculars.zoom = math.max(Config.Modes[Binoculars.mode].minZoom, Binoculars.zoom - 0.5) -- Changed increment to 0.5
+    Binoculars.zoom = math.max(Config.Modes[Binoculars.mode].minZoom, Binoculars.zoom - 0.5)
     Binoculars:UpdateCamZoom()
   end,
   exit = function()
@@ -238,8 +260,6 @@ Binoculars.KeyAction = {
 function Binoculars:InitKeybinds()
   for action, value in pairs(Config.Controls) do
     local name = "force_binoculars_" .. action .. "3"
-    -- Add spaces between uppercase letters and capitalize first letter
-    -- local desc = action:gsub("(%u)", " %1"):gsub("^%s*(.)", string.upper):gsub("^%s+", "")
     local desc = locale(action)
     local func = self.KeyAction[action]
 
