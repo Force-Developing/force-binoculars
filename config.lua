@@ -3,18 +3,23 @@ Config = {}
 Config.Debug = true
 Config.Locale = "en" -- ar, de, en, es, fr, nl, pl, pt, ru, sv
 
--- @field [table] Framework - Configuration for the framework
--- @field [string] Framework.name - Name of the framework ("esx", "qbcore", "qbx", "custom" or "auto")
--- @field [string] Framework.resource - Resource name for ESX or QBCore etc
 Config.Framework = {
   name = "auto",
   resource = "auto"
 }
 
-Config.Item = "binoculars"                    -- Item name, set to false to disable item registration
-Config.EnhancedItem = "binoculars_modes"      -- Enhanced item name, set to false to disable item registration
-Config.Command = "binoculars"                 -- Command name, set to false to disable command registration
-Config.EnhancedCommand = "binoculars_modes"   -- Enhanced command name, set to false to disable command registration
+Config.Binoculars = {
+  {
+    item = "binoculars",    -- item name or false to disable
+    command = "binoculars", -- command name or false to disable
+    type = "default",       -- modes: (default)
+  },
+  {
+    item = "binoculars_modes",    -- item name or false to disable
+    command = "binoculars_modes", -- command name or false to disable
+    type = "modes",               -- modes: (default, nightvision, thermalvision)
+  }
+}
 
 Config.CameraOffset = vector3(0.2, 0.2, 0.95) -- Adjusted to be more like holding binoculars
 Config.CameraRotationClamp = {

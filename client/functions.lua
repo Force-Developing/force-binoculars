@@ -213,27 +213,27 @@ end
 
 Binoculars.KeyAction = {
   previous = function()
-    Binoculars:Debug("info", "Previous")
+    Debug("info", "Previous")
     Binoculars.mode = (#Config.Modes + Binoculars.mode - 2) % #Config.Modes + 1
     Binoculars:UpdateCamMode()
   end,
   next = function()
-    Binoculars:Debug("info", "Next")
+    Debug("info", "Next")
     Binoculars.mode = Binoculars.mode % #Config.Modes + 1
     Binoculars:UpdateCamMode()
   end,
   zoomIn = function()
-    Binoculars:Debug("info", "Zoom in")
+    Debug("info", "Zoom in")
     Binoculars.zoom = math.min(Config.Modes[Binoculars.mode].maxZoom, Binoculars.zoom + 0.5) -- Changed increment to 0.5
     Binoculars:UpdateCamZoom()
   end,
   zoomOut = function()
-    Binoculars:Debug("info", "Zoom out")
+    Debug("info", "Zoom out")
     Binoculars.zoom = math.max(Config.Modes[Binoculars.mode].minZoom, Binoculars.zoom - 0.5) -- Changed increment to 0.5
     Binoculars:UpdateCamZoom()
   end,
   exit = function()
-    Binoculars:Debug("info", "Exit")
+    Debug("info", "Exit")
     Binoculars:ToggleBinoculars(false)
   end
 }
@@ -286,26 +286,18 @@ function Binoculars:InitCommands()
   self:Debug("info", "Commands initialized")
 end
 
----@param type string The type of the debug message (error, warn, info, verbose, debug).
----@param message string The debug message to print.
-function Binoculars:Debug(type, message)
-  if not Config.Debug then return end
-  local func = lib.print[type] or lib.print.info
-  func(message)
-end
-
 exports("ToggleBinoculars", function(...)
-  Binoculars:Debug("info", "Toggling binoculars: " .. (Binoculars.inAction and " off" or " on"))
+  Debug("info", "Toggling binoculars: " .. (Binoculars.inAction and " off" or " on"))
   Binoculars:ToggleBinoculars(...)
 end)
 
 exports("ActivateBinoculars", function(...)
-  Binoculars:Debug("info", "Activating binoculars")
+  Debug("info", "Activating binoculars")
   Binoculars:ActivateBinoculars(...)
 end)
 
 exports("DeactivateBinoculars", function()
-  Binoculars:Debug("info", "Deactivating binoculars")
+  Debug("info", "Deactivating binoculars")
   Binoculars:DeactivateBinoculars()
 end)
 

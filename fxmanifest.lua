@@ -21,7 +21,6 @@ shared_scripts {
 server_scripts {
     'version.lua',
 
-    "server/events.lua",
     "server/functions.lua",
     "server/main.lua",
     "server/custom/*.lua",
