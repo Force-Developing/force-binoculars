@@ -1,24 +1,5 @@
 Binoculars = {}
 
-function Binoculars:InitFramework()
-  if Config.Framework ~= "auto" then return end
-
-  local frameworks = {
-    { name = "es_extended", type = "esx" },
-    { name = "qb-core",     type = "qbcore" },
-    { name = "qbx-core",    type = "qbx" }
-  }
-
-  for _, fw in ipairs(frameworks) do
-    if GetResourceState(fw.name) ~= "missing" then
-      Config.Framework = fw.type
-      return
-    end
-  end
-
-  Config.Framework = "custom"
-end
-
 function Binoculars:InitMain()
   Binoculars:Debug("info", "Initializing main")
 

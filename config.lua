@@ -1,9 +1,15 @@
 Config = {}
 
 Config.Debug = true
-Config.Locale = "en"                          -- ar, de, en, es, fr, nl, pl, pt, ru, sv
-Config.Framework = "auto"                     -- auto, esx, qbcore, qbx, custom
-Config.FrameworkResource = "auto"             -- Resource name for the framework
+Config.Locale = "en" -- ar, de, en, es, fr, nl, pl, pt, ru, sv
+
+-- @field [table] Framework - Configuration for the framework
+-- @field [string] Framework.name - Name of the framework ("esx", "qbcore", "qbx", "custom" or "auto")
+-- @field [string] Framework.resource - Resource name for ESX or QBCore etc
+Config.Framework = {
+  name = "auto",
+  resource = "auto"
+}
 
 Config.Item = "binoculars"                    -- Item name, set to false to disable item registration
 Config.EnhancedItem = "binoculars_modes"      -- Enhanced item name, set to false to disable item registration

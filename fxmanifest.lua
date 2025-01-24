@@ -4,7 +4,7 @@ game "gta5"
 
 author 'Force Developments <discord:@force3883>'
 description 'Fivem Binoculars system for ESX, QBCore and custom frameworks'
-version '1.0.0'
+version '1.1.0'
 
 dependencies {
     'ox_lib',
@@ -13,6 +13,8 @@ dependencies {
 
 shared_scripts {
     '@ox_lib/init.lua',
+
+    "shared/*.lua",
     "config.lua",
 }
 

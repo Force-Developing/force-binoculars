@@ -1,4 +1,4 @@
-if Config.Framework ~= "qbx" then
+if Config.Framework.name ~= "qbx" then
   return
 end
 

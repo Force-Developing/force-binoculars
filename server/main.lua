@@ -1,4 +1,4 @@
-Binoculars:InitFramework()
+InitFramework()
 CreateThread(function()
   Binoculars:InitMain()
 end)

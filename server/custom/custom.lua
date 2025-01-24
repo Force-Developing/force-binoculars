@@ -1,4 +1,4 @@
-if Config.Framework ~= "custom" then
+if Config.Framework.name ~= "custom" then
   return
 end
 
