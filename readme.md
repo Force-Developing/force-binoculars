@@ -1,6 +1,6 @@
 # force-binoculars
 
-A more advanced binoculars resource then normal for you're FiveM server. It Contains multiple vision modes and configuration options.
+A more advanced binoculars resource for your FiveM server, with multiple vision modes, adjustable zoom and configurable camera behaviour.
 [Documentation](https://docs.forcedevelopments.com/)
 
 ## Features
@@ -8,12 +8,13 @@ A more advanced binoculars resource then normal for you're FiveM server. It Cont
 - Multiple vision modes (Normal, Night Vision, Thermal Vision)
 - Adjustable zoom
 - Configurable key bindings
-- Framework support (ESX, QBCore, QBX)
-- Item-based usage support
-- Command-based usage support
+- Framework support (ESX, QBCore, QBX, custom) or standalone via the command
+- Item-based usage, with a separate enhanced item for the special modes
+- Command-based usage
+- Auto-exit on death, entering a vehicle or ragdoll
 - Realistic camera positioning and movement
 - On-screen controls display
-- Customizable camera settings
+- Ten locales (ar, de, en, es, fr, nl, pl, pt, ru, sv)
 
 ### Preview
 
@@ -30,71 +31,113 @@ A more advanced binoculars resource then normal for you're FiveM server. It Cont
 
 ## Installation
 
-1. Download the latest release
-2. Extract to your resources folder
-3. Add `ensure force-binoculars` to your server.cfg
-4. Configure the script in `config.lua` (optional)
+1. Install ox_lib
+2. Download the latest release and extract it to your resources folder as `force-binoculars`
+3. Add `ensure force-binoculars` to your server.cfg, after `ox_lib` and your framework (ESX, QBCore or QBX are detected automatically; without one the resource runs standalone with commands only)
+4. Add the items to your inventory if you want item-based usage (see below)
+5. Configure the script in `config.lua` (optional)
 
 ## Configuration
 
 ```lua
-Config = {
-    Debug = false,                            -- Enable/disable debug mode
-    Locale = "en",                           -- Language setting (ar, de, en, es, fr, nl, pl, pt, ru, se)
-    Framework = "auto",                      -- Framework detection (auto, esx, qbcore, qbx, custom)
-    Item = "binoculars",                    -- Regular binoculars item name
-    EnhancedItem = "binoculars_modes",      -- Enhanced binoculars item name (with special modes)
-    Command = "binoculars",                 -- Command to use binoculars
+Config.Debug = false
+Config.Locale = "en" -- ar, de, en, es, fr, nl, pl, pt, ru, sv
 
-    ...more settings..
+Config.Framework = {
+  name = "auto",    -- auto, esx, qbcore, qbx, custom
+  resource = "auto" -- "auto" = es_extended / qb-core / qbx_core
+}
+
+Config.Binoculars = {
+  { item = "binoculars",       command = "binoculars", modes = false },
+  { item = "binoculars_modes", command = false,        modes = true  },
 }
 ```
+
+`minZoom`/`maxZoom` in `Config.Modes` are magnification factors (FOV = 90 / zoom): higher = more zoomed in, lower = wider view. See the documentation for every option.
 
 ## Usage
 
 ### Items
 
-- Use the `binoculars` item for basic functionality
-- Use the `binoculars_modes` item for enhanced functionality (night vision, thermal)
+- `binoculars` — normal vision with zoom
+- `binoculars_modes` — additionally unlocks night vision and thermal vision
 
 ### Commands
 
-- `/binoculars` - Toggle binoculars (if enabled in config)
+- `/binoculars` — toggle normal binoculars (enabled by default)
+- `/binoculars_modes` — toggle binoculars with modes. Disabled by default because a command is available to everyone and would bypass the item; enable it with `command = "binoculars_modes"`
 
 ### Controls
 
 - `MOUSE WHEEL UP/W` - Zoom in
 - `MOUSE WHEEL DOWN/S` - Zoom out
-- `LEFT ARROW` - Previous mode
-- `RIGHT ARROW` - Next mode
+- `LEFT ARROW` - Previous mode (modes item only)
+- `RIGHT ARROW` - Next mode (modes item only)
 - `BACKSPACE` - Exit binoculars
 
-## Modes
+### Item definitions
 
-1. **Default** - Standard vision mode
-2. **Night Vision** - Enhanced visibility in dark areas
-3. **Thermal Vision** - Heat signature detection
+**ox_inventory** — add to `ox_inventory/data/items.lua`:
+
+```lua
+['binoculars'] = {
+    label = 'Binoculars',
+    weight = 500,
+    stack = false,
+    close = true,
+    description = 'Look at things far away',
+},
+
+['binoculars_modes'] = {
+    label = 'Tactical Binoculars',
+    weight = 750,
+    stack = false,
+    close = true,
+    description = 'Binoculars with night and thermal vision',
+},
+```
+
+**qb-core** — add to `qb-core/shared/items.lua`:
+
+```lua
+binoculars = { name = 'binoculars', label = 'Binoculars', weight = 500, type = 'item', image = 'binoculars.png', unique = true, useable = true, shouldClose = true, description = 'Look at things far away' },
+binoculars_modes = { name = 'binoculars_modes', label = 'Tactical Binoculars', weight = 750, type = 'item', image = 'binoculars_modes.png', unique = true, useable = true, shouldClose = true, description = 'Binoculars with night and thermal vision' },
+```
+
+Images go in your inventory's image folder (`ox_inventory/web/images/` or `qb-inventory/html/images/`). Usage is registered through the framework (`ESX.RegisterUsableItem`, `QBCore.Functions.CreateUseableItem`, `exports.qbx_core:CreateUseableItem`), so no `client`/`server` export is needed on the item.
+
+If another resource already registers a usable `binoculars` item (for example qb-smallresources), remove that registration or rename the item in `Config.Binoculars`.
 
 ## Integration
 
-### Client Exports
+### Client exports
 
 ```lua
+-- Toggle, force on or force off
+-- state: true = on, false = off, nil = toggle
+-- useModes: true allows night/thermal vision (also requires Config.UseModes = true)
+--- @return boolean active  -- state after the call
+exports["force-binoculars"]:ToggleBinoculars(state, useModes)
+
+-- Turn on (no-op if already active). Returns false if the player cannot use
+-- binoculars right now (dead, in a vehicle or ragdolling)
+--- @return boolean success
+exports["force-binoculars"]:ActivateBinoculars(useModes)
+
+-- Turn off and clean up
+--- @return boolean wasActive  -- false if they were not active
+exports["force-binoculars"]:DeactivateBinoculars()
+
 -- Check if binoculars are active
+--- @return boolean active
 exports["force-binoculars"]:IsBinocularsActive()
 
--- Get the current binoculars state
---- @return table { active, mode, zoom }
-exports["force-binoculars"]:GetBinocularsState()
-
--- Toggle binoculars
-exports["force-binoculars"]:ToggleBinoculars()
-
--- Activate binoculars
-exports["force-binoculars"]:ActivateBinoculars()
-
--- Deactivate binoculars
-exports["force-binoculars"]:DeactivateBinoculars()
+-- Current state, returned as three values (not a table)
+--- @return boolean active
+--- @return integer modeIndex  -- index into Config.Modes (1 = default, 2 = nightvision, 3 = thermalvision)
+--- @return number zoom        -- magnification factor, camera FOV = 90 / zoom
+local active, modeIndex, zoom = exports["force-binoculars"]:GetBinocularsState()
 ```
 
 ## License
@@ -108,7 +151,3 @@ For questions, issues, or feature requests, please open an [issue](https://githu
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-```
-
-```
