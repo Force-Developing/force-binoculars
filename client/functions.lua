@@ -5,9 +5,9 @@ Binoculars = {
   camRotation = vector3(0.0, 0.0, 0.0),
   zoom = 5.0,
   mode = 1,
-  scaleform = nil,
-  camscaleform = nil,
-  useModes = nil,
+  useModes = false,
+  session = 0,
+  scaleforms = nil,
   cache = {
     keybinds = {},
     commands = {}
@@ -24,6 +24,8 @@ function Binoculars:InitMain()
 end
 
 local hudComponents = { 19, 1, 2, 3, 4, 13, 11, 12, 15, 18 }
+local TIMECYCLE_MODIFIER = "default"
+local TIMECYCLE_STRENGTH = 1.0 -- SetTimecycleModifierStrength expects 0.0 - 1.0
 
 local function DisableHudAndControls()
   HideHudAndRadarThisFrame()
@@ -34,42 +36,82 @@ local function DisableHudAndControls()
   DisableAllControlActions(2)
 end
 
-function Binoculars:ToggleBinoculars(toggle, useModes)
-  self.inAction = toggle or not self.inAction
-  Debug("info", "Binoculars toggled: " .. (self.inAction and "on" or "off"))
+local function GetFov(zoom)
+  -- Higher zoom (magnification) = lower FOV = more zoomed in
+  return (45.0 / zoom) * 2.0
+end
 
-  if self.inAction then
+local function CanUseBinoculars(ped)
+  return DoesEntityExist(ped)
+      and not IsEntityDead(ped)
+      and not IsPedInAnyVehicle(ped, false)
+      and not IsPedRagdoll(ped)
+end
+
+local function RequestScaleform(name)
+  local ok, handle = pcall(lib.requestScaleformMovie, name)
+  if ok and handle then
+    return handle
+  end
+
+  Debug("error", "Failed to load scaleform: " .. name)
+  return nil
+end
+
+--- @param state boolean|nil true = on, false = off, nil = toggle
+--- @param useModes boolean|nil allow night/thermal vision modes
+--- @return boolean active
+function Binoculars:ToggleBinoculars(state, useModes)
+  if state == nil then
+    state = not self.inAction
+  end
+
+  if state then
     self:ActivateBinoculars(useModes)
   else
     self:DeactivateBinoculars()
   end
+
+  Debug("info", "Binoculars toggled: " .. (self.inAction and "on" or "off"))
+  return self.inAction
 end
 
+--- @param useModes boolean|nil allow night/thermal vision modes
+--- @return boolean success
 function Binoculars:ActivateBinoculars(useModes)
+  if self.inAction then
+    return true
+  end
+
   Debug("info", "Activating binoculars")
 
-  if not DoesEntityExist(cache.ped) then
-    Debug("error", "Failed to get player ped")
+  if not CanUseBinoculars(cache.ped) then
+    Debug("warn", "Player cannot use binoculars right now")
     return false
   end
 
-  self.useModes = useModes
-  ToggleHud(false)
+  self.useModes = (useModes and Config.UseModes) and true or false
+  self.mode = 1
+  self.zoom = Config.Modes[self.mode].minZoom
 
-  local success = self:SetupCamera(cache.ped)
-  if not success then
+  if not self:SetupCamera(cache.ped) then
     Debug("error", "Failed to setup camera")
     return false
   end
 
+  self.inAction = true
+  self.session = (self.session or 0) + 1
+
+  ToggleHud(false)
   self:InitializeEffects()
   TaskStartScenarioInPlace(cache.ped, Config.Scenario, 0, true)
-  self:StartStateThread()
+  self:StartStateThread(self.session)
 
   return true
 end
 
 function Binoculars:SetupCamera(playerPed)
+  -- NOTE: rotation is negated from the gameplay cam; verify in-game before changing
   self.camRotation = -GetGameplayCamRot(2)
   self.camCoords = GetOffsetFromEntityInWorldCoords(playerPed,
     Config.CameraOffset.x,
@@ -77,16 +119,14 @@ function Binoculars:SetupCamera(playerPed)
     Config.CameraOffset.z
   )
 
-  self.zoom = Config.Modes[self.mode].minZoom
-  local fov = (45.0 / self.zoom) * 2.0
-
   self.camera = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA",
     self.camCoords.x, self.camCoords.y, self.camCoords.z,
     self.camRotation.x, self.camRotation.y, self.camRotation.z,
-    fov, false, 2
+    GetFov(self.zoom), false, 2
   )
 
   if not DoesCamExist(self.camera) then
+    self.camera = nil
     return false
   end
 
@@ -96,81 +136,121 @@ function Binoculars:SetupCamera(playerPed)
 end
 
 function Binoculars:InitializeEffects()
-  SetTimecycleModifier("default")
-  SetTimecycleModifierStrength(0.0)
-
-  SetNightvision(false)
-  SetSeethrough(false)
-
-  local mode = Config.Modes[self.mode]
-  SetTimecycleModifier(mode.name)
-  SetTimecycleModifierStrength(1.0)
-
-  SetTimecycleModifierStrength(self.zoom)
+  SetTimecycleModifier(TIMECYCLE_MODIFIER)
+  SetTimecycleModifierStrength(TIMECYCLE_STRENGTH)
+  self:ApplyModeEffects()
 end
 
-function Binoculars:StartStateThread()
+function Binoculars:ApplyModeEffects()
+  local name = Config.Modes[self.mode].name
+  SetNightvision(name == "nightvision")
+  SetSeethrough(name == "thermalvision")
+end
+
+function Binoculars:LoadScaleforms()
+  local scaleforms = {
+    binoculars = RequestScaleform("BINOCULARS"),
+    hud = self.useModes and RequestScaleform(Config.BinocularsHud) or nil,
+    buttons = RequestScaleform("instructional_buttons"),
+  }
+
+  for _, key in ipairs({ "binoculars", "hud" }) do
+    local handle = scaleforms[key]
+    if handle then
+      BeginScaleformMovieMethod(handle, "SET_CAM_LOGO")
+      ScaleformMovieMethodAddParamInt(0)
+      EndScaleformMovieMethod()
+    end
+  end
+
+  if scaleforms.buttons then
+    Utils:SetupHelpButtons(scaleforms.buttons, self.useModes)
+  end
+
+  return scaleforms
+end
+
+local function ReleaseScaleforms(scaleforms)
+  if not scaleforms then return end
+  for _, handle in pairs(scaleforms) do
+    SetScaleformMovieAsNoLongerNeeded(handle)
+  end
+end
+
+local function DrawScaleforms(scaleforms)
+  if scaleforms.binoculars then
+    DrawScaleformMovie(scaleforms.binoculars, 0.5, 0.5, 1.0, 1.0, 255, 255, 255, 255, 0)
+  end
+
+  if scaleforms.hud then
+    DrawScaleformMovie(scaleforms.hud, Config.HudPos.x, Config.HudPos.y, Config.HudPos.w, Config.HudPos.h,
+      255, 255, 255, 255, 0)
+  end
+
+  if scaleforms.buttons then
+    DrawScaleformMovieFullscreen(scaleforms.buttons, 36, 53, 61, 255, 0)
+  end
+end
+
+function Binoculars:StartStateThread(session)
   CreateThread(function()
-    while self.inAction do
-      if not self.camera then break end
+    -- Scaleforms are requested once per activation and released on deactivation
+    local scaleforms = self:LoadScaleforms()
+    if not self.inAction or self.session ~= session then
+      ReleaseScaleforms(scaleforms)
+      return
+    end
+    self.scaleforms = scaleforms
 
-      self:UpdateState()
+    while self.inAction and self.session == session and self.camera do
+      if not CanUseBinoculars(cache.ped) then
+        Debug("info", "Auto-exiting binoculars (dead, in vehicle or ragdoll)")
+        self:DeactivateBinoculars()
+        break
+      end
 
-      Wait(4)
+      DrawScaleforms(scaleforms)
+      self:UpdateCamRotation()
+      DisableHudAndControls()
+
+      Wait(0)
     end
   end)
 end
 
-function Binoculars:UpdateState()
-  self:UpdateScaleforms()
-  self:UpdateCamRotation()
-  DisableHudAndControls()
-end
-
-function Binoculars:UpdateScaleforms()
-  -- Binoculars scaleform (centered)
-  if not HasScaleformMovieLoaded(self.scaleform) then
-    self.scaleform = lib.requestScaleformMovie('BINOCULARS')
-  end
-  BeginScaleformMovieMethod(self.scaleform, 'SET_CAM_LOGO')
-  ScaleformMovieMethodAddParamInt(0)
-  EndScaleformMovieMethod()
-  DrawScaleformMovie(self.scaleform, 0.5, 0.5, 1.0, 1.0, 255, 255, 255, 255, 0)
-  -- Security camera scaleform
-  if (self.useModes ~= nil and self.useModes ~= false) and Config.UseModes then
-    self.camscaleform = lib.requestScaleformMovie(Config.BinocularsHud)
-    BeginScaleformMovieMethod(self.camscaleform, 'SET_CAM_LOGO')
-    ScaleformMovieMethodAddParamInt(0)
-    EndScaleformMovieMethod()
-    DrawScaleformMovie(self.camscaleform, Config.HudPos.x, Config.HudPos.y, Config.HudPos.w, Config.HudPos.h, 255, 255,
-      255, 255, 0)
-  end
-
-  -- Buttons scaleform
-  Utils:ShowHelpButtons(self.useModes)
-end
-
+--- @return boolean wasActive
 function Binoculars:DeactivateBinoculars()
+  if not self.inAction then
+    return false
+  end
+
   Debug("info", "Deactivating binoculars")
+  self.inAction = false
   ToggleHud(true)
 
   RenderScriptCams(false, false, 0, true, true)
-  DestroyCam(self.camera, false)
-
-  ClearTimecycleModifier()
-
-  SetScaleformMovieAsNoLongerNeeded(self.scaleform)
-  if self.camscaleform then
-    SetScaleformMovieAsNoLongerNeeded(self.camscaleform)
+  if self.camera then
+    DestroyCam(self.camera, false)
+    self.camera = nil
   end
 
+  ReleaseScaleforms(self.scaleforms)
+  self.scaleforms = nil
+
+  ClearTimecycleModifier()
   SetNightvision(false)
   SetSeethrough(false)
 
-  ClearPedTasks(cache.ped)
-  ClearPedSecondaryTask(cache.ped)
+  local ped = cache.ped
+  if DoesEntityExist(ped) and not IsEntityDead(ped) and not IsPedInAnyVehicle(ped, false) then
+    ClearPedTasks(ped)
+  end
+  ClearPedSecondaryTask(ped)
 
-  Utils.cachedButtons = nil
+  self.mode = 1
+  self.useModes = false
+
+  return true
 end
 
 function Binoculars:UpdateCamRotation()
@@ -196,45 +276,38 @@ function Binoculars:UpdateCamRotation()
 end
 
 function Binoculars:UpdateCamMode()
-  if not self.inAction or not self.useModes or not Config.UseModes then
+  if not self.inAction or not self.useModes then
     return
   end
   PlaySoundFrontend(-1, "SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", false)
 
+  self:ApplyModeEffects()
+
+  -- Keep zoom within the new mode's limits
   local mode = Config.Modes[self.mode]
-  SetNightvision(false)
-  SetSeethrough(false)
+  self.zoom = math.max(mode.minZoom, math.min(mode.maxZoom, self.zoom))
+  self:UpdateCamZoom()
 
-  if mode.name == "nightvision" then
-    SetNightvision(true)
-  else
-    SetNightvision(false)
-  end
-
-  if mode.name == "thermalvision" then
-    SetSeethrough(true)
-  else
-    SetSeethrough(false)
-  end
-
-  Debug("info", "Updated binoculars")
+  Debug("info", "Updated binoculars mode: " .. mode.name)
 end
 
 function Binoculars:UpdateCamZoom()
-  if not self.inAction then return end
+  if not self.inAction or not self.camera then return end
 
-  local fov = (45.0 / self.zoom) * 2.0
+  local fov = GetFov(self.zoom)
   SetCamFov(self.camera, fov)
   Debug("info", "Updated binoculars zoom: " .. fov)
 end
 
 Binoculars.KeyAction = {
   previous = function()
+    if not Binoculars.useModes then return end
     Debug("info", "Previous")
     Binoculars.mode = (#Config.Modes + Binoculars.mode - 2) % #Config.Modes + 1
     Binoculars:UpdateCamMode()
   end,
   next = function()
+    if not Binoculars.useModes then return end
     Debug("info", "Next")
     Binoculars.mode = Binoculars.mode % #Config.Modes + 1
     Binoculars:UpdateCamMode()
@@ -297,25 +370,30 @@ function Binoculars:InitCommands()
   Debug("info", "Commands initialized")
 end
 
-exports("ToggleBinoculars", function(...)
-  Debug("info", "Toggling binoculars: " .. (Binoculars.inAction and " off" or " on"))
-  Binoculars:ToggleBinoculars(...)
+--- @param state boolean|nil true = on, false = off, nil = toggle
+--- @param useModes boolean|nil allow night/thermal vision modes
+--- @return boolean active
+exports("ToggleBinoculars", function(state, useModes)
+  return Binoculars:ToggleBinoculars(state, useModes)
 end)
 
-exports("ActivateBinoculars", function(...)
-  Debug("info", "Activating binoculars")
-  Binoculars:ActivateBinoculars(...)
+--- @param useModes boolean|nil allow night/thermal vision modes
+--- @return boolean success
+exports("ActivateBinoculars", function(useModes)
+  return Binoculars:ToggleBinoculars(true, useModes)
 end)
 
+--- @return boolean wasActive
 exports("DeactivateBinoculars", function()
-  Debug("info", "Deactivating binoculars")
-  Binoculars:DeactivateBinoculars()
+  return Binoculars:DeactivateBinoculars()
 end)
 
+--- @return boolean active
 exports("IsBinocularsActive", function()
   return Binoculars.inAction
 end)
 
+--- @return boolean active, integer modeIndex, number zoom
 exports("GetBinocularsState", function()
   return Binoculars.inAction, Binoculars.mode, Binoculars.zoom
 end)
