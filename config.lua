@@ -4,8 +4,8 @@ Config.Debug = false -- Default to false in production
 Config.Locale = "en" -- ar, de, en, es, fr, nl, pl, pt, ru, sv
 
 Config.Framework = {
-  name = "auto",
-  resource = "auto"
+  name = "auto",    -- auto, esx, qbcore, qbx, custom (auto falls back to standalone: commands only)
+  resource = "auto" -- framework resource name, "auto" = es_extended / qb-core / qbx_core
 }
 
 Config.Binoculars = {
@@ -15,8 +15,8 @@ Config.Binoculars = {
     modes = false,          -- modes: (default)
   },
   {
-    item = "binoculars_modes",    -- item name or false to disable
-    command = "binoculars_modes", -- command name or false to disable
+    item = "binoculars_modes", -- item name or false to disable
+    command = false,           -- command name or false to disable (off by default: a public command would bypass the item)
     modes = true,                 -- modes: (default, nightvision, thermalvision)
   }
 }
@@ -35,8 +35,10 @@ Config.HudPos = { x = 0.5, y = 0.5, w = 1.2, h = 1.2 } -- Scaleform position and
 Config.Modes = {
   {
     name = "default",
-    maxZoom = 30.0, -- Less zoomed out (wider FOV)
-    minZoom = 5.0,  -- More zoomed in (narrower FOV)
+    -- Zoom is a magnification factor, camera FOV = 90 / zoom
+    -- Higher value = lower FOV = more zoomed in; lower value = wider view
+    maxZoom = 30.0, -- Most zoomed in (FOV 3.0)
+    minZoom = 5.0,  -- Widest view, used when the binoculars open (FOV 18.0)
   },
   {
     name = "nightvision",
