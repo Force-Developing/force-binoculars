@@ -16,26 +16,48 @@ function Debug(level, message, ...)
   fn(string.format(message, ...))
 end
 
-function InitFramework()
-  if not Config.Framework.name == "auto" then return end
-  local frameworks = {
-    { name = "esx",    resource = "es_extended" },
-    { name = "qbx",    resource = "qbx_core" },
-    { name = "qbcore", resource = "qb-core" }
-  }
+local supportedFrameworks = {
+  { name = "esx",    resource = "es_extended" },
+  { name = "qbx",    resource = "qbx_core" },
+  { name = "qbcore", resource = "qb-core" },
+}
 
-  Debug("info", "Initializing framework")
-  for _, framework in ipairs(frameworks) do
-    if IsResourceStartingOrStarted(framework.resource) then
-      Config.Framework = framework
-      return
-    end
-
-    if next(frameworks) == nil then
-      Config.Framework = "custom"
+local function getDefaultResource(name)
+  for _, framework in ipairs(supportedFrameworks) do
+    if framework.name == name then
+      return framework.resource
     end
   end
-  Debug("info", "Framework initialized: " .. Config.Framework.name)
+end
+
+function InitFramework()
+  local configured = type(Config.Framework) == "table" and Config.Framework or {}
+  local name = configured.name or "auto"
+  local resource = configured.resource or "auto"
+
+  Debug("info", "Initializing framework")
+
+  if name ~= "auto" then
+    if resource == "auto" then
+      resource = getDefaultResource(name) or false
+    end
+
+    Config.Framework = { name = name, resource = resource }
+    Debug("info", "Framework initialized: " .. name)
+    return
+  end
+
+  for _, framework in ipairs(supportedFrameworks) do
+    if IsResourceStartingOrStarted(framework.resource) then
+      Config.Framework = { name = framework.name, resource = framework.resource }
+      Debug("info", "Framework initialized: " .. framework.name)
+      return
+    end
+  end
+
+  Config.Framework = { name = "standalone", resource = false }
+  lib.print.warn("No supported framework detected (es_extended, qbx_core, qb-core). " ..
+    "Usable items will not be registered; commands still work.")
 end
 
 function ToggleHud(toggle)

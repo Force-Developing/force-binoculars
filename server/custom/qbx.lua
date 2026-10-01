@@ -3,5 +3,5 @@ if Config.Framework.name ~= "qbx" then
 end
 
 function RegisterUsableItem(item, cb)
-  exports.qbx_core:CreateUseableItem(item, cb)
+  exports[Config.Framework.resource]:CreateUseableItem(item, cb)
 end

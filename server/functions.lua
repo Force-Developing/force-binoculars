@@ -9,6 +9,16 @@ function Binoculars:InitMain()
 end
 
 function Binoculars:InitItems()
+  if Config.Framework.name == "standalone" then
+    return -- InitFramework already warned; commands still work
+  end
+
+  if type(RegisterUsableItem) ~= "function" then
+    lib.print.warn(("No RegisterUsableItem handler for framework '%s'; skipping item registration. Commands still work.")
+      :format(tostring(Config.Framework.name)))
+    return
+  end
+
   for _, item in ipairs(Config.Binoculars) do
     if item.item then
       Debug("info", "Registering item: " .. item.item)
