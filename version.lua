@@ -1,7 +1,7 @@
 lib.versionCheck('Force-Developing/force-binoculars')
 
 local latestVersionUrl =
-"https://gist.githubusercontent.com/Force-Developing/3ef6cb4066ebc648b19dc43b47b4a23a/raw/b1b4a43cc1078309c71f1da8851009469eb46075/force-binoculars"
+"https://gist.githubusercontent.com/Force-Developing/3ef6cb4066ebc648b19dc43b47b4a23a/raw/force-binoculars"
 local currentVersion = GetResourceMetadata(GetCurrentResourceName(), 'version', 0)
 
 local function parseVersion(version)
@@ -83,7 +83,7 @@ Latest Version: %s
   end, 'GET', '', {
     ['Cache-Control'] = 'no-cache',
     ['Content-Type'] = 'application/json',
-    ['User-Agent'] = string.format('force-appearance/%s', currentVersion)
+    ['User-Agent'] = string.format('force-binoculars/%s', currentVersion)
   })
 end
 
