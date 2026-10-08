@@ -1,7 +1,6 @@
-if Config.Framework.name ~= "qbx" then
-  return
-end
-
-function RegisterUsableItem(item, cb)
-  exports[Config.Framework.resource]:CreateUseableItem(item, cb)
-end
+-- Runs once force-binoculars knows the framework is "qbx" and it has started (again after every restart)
+RegisterFramework("qbx", function(resource)
+  function RegisterUsableItem(item, cb)
+    exports[resource]:CreateUseableItem(item, cb)
+  end
+end)
