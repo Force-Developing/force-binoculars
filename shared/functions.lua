@@ -13,7 +13,13 @@ function Debug(level, message, ...)
   }
 
   local fn = levels[level] or levels.info
-  fn(string.format(message, ...))
+  message = tostring(message)
+  -- Only format with arguments: messages often embed error text that can contain '%'
+  if select("#", ...) > 0 then
+    local ok, formatted = pcall(string.format, message, ...)
+    if ok then message = formatted end
+  end
+  fn(message)
 end
 
 local RESOURCE = GetCurrentResourceName()
@@ -179,10 +185,16 @@ function ToggleHud(toggle)
 
   for _, hud in ipairs(huds) do
     if IsResourceStartingOrStarted(hud.name) then
-      if hud.export then
-        exports[hud.name][hud.export](toggle)
-      elseif hud.eventOn and hud.eventOff then
-        TriggerEvent(toggle and hud.eventOn or hud.eventOff)
+      -- A HUD version without this export must not break opening or closing the binoculars
+      local ok, err = pcall(function()
+        if hud.export then
+          exports[hud.name][hud.export](nil, toggle)
+        elseif hud.eventOn and hud.eventOff then
+          TriggerEvent(toggle and hud.eventOn or hud.eventOff)
+        end
+      end)
+      if not ok then
+        Debug("warn", ("Toggling the HUD of %s failed: %s"):format(hud.name, tostring(err)))
       end
     end
   end

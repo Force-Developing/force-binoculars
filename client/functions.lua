@@ -226,7 +226,6 @@ function Binoculars:DeactivateBinoculars()
 
   Debug("info", "Deactivating binoculars")
   self.inAction = false
-  ToggleHud(true)
 
   RenderScriptCams(false, false, 0, true, true)
   if self.camera then
@@ -249,6 +248,9 @@ function Binoculars:DeactivateBinoculars()
 
   self.mode = 1
   self.useModes = false
+
+  -- Last: it calls other resources, and the camera must be released even if one of them fails
+  ToggleHud(true)
 
   return true
 end
