@@ -215,16 +215,28 @@ function Binoculars:StartStateThread(session)
     end
     self.scaleforms = scaleforms
 
-    while self.inAction and self.session == session and self.camera do
+    local function frame()
       if not CanUseBinoculars(PlayerPedId()) or IsPausePressed() then
         Debug("info", "Auto-exiting binoculars (dead, in vehicle, ragdoll, swimming or ESC)")
         self:DeactivateBinoculars()
-        break
+        return false
       end
 
       DrawScaleforms(scaleforms)
       self:UpdateCamRotation()
       DisableHudAndControls()
+      return true
+    end
+
+    while self.inAction and self.session == session and self.camera do
+      -- An error here (e.g. a broken Config.HudPos) would otherwise end the thread with the camera still active
+      local ok, keepGoing = pcall(frame)
+      if not ok then
+        lib.print.error("Binoculars closed after an error: " .. tostring(keepGoing))
+        self:DeactivateBinoculars()
+        break
+      end
+      if not keepGoing then break end
 
       Wait(0)
     end
