@@ -46,6 +46,17 @@ local function CanUseBinoculars(ped)
       and not IsEntityDead(ped)
       and not IsPedInAnyVehicle(ped, false)
       and not IsPedRagdoll(ped)
+      and not IsPedSwimming(ped)
+end
+
+-- ESC / P: the pause menu is disabled while the binoculars are open, so treat it as "close"
+local PAUSE_CONTROLS = { 199, 200 }
+
+local function IsPausePressed()
+  for _, control in ipairs(PAUSE_CONTROLS) do
+    if IsDisabledControlJustPressed(0, control) then return true end
+  end
+  return false
 end
 
 local function RequestScaleform(name)
@@ -85,7 +96,9 @@ function Binoculars:ActivateBinoculars(useModes)
 
   Debug("info", "Activating binoculars")
 
-  if not CanUseBinoculars(cache.ped) then
+  -- Not cache.ped: it still holds the old, deleted ped for up to 100 ms after a model change
+  local ped = PlayerPedId()
+  if not CanUseBinoculars(ped) then
     Debug("warn", "Player cannot use binoculars right now")
     return false
   end
@@ -94,7 +107,7 @@ function Binoculars:ActivateBinoculars(useModes)
   self.mode = 1
   self.zoom = Config.Modes[self.mode].minZoom
 
-  if not self:SetupCamera(cache.ped) then
+  if not self:SetupCamera(ped) then
     Debug("error", "Failed to setup camera")
     return false
   end
@@ -104,7 +117,7 @@ function Binoculars:ActivateBinoculars(useModes)
 
   ToggleHud(false)
   self:InitializeEffects()
-  TaskStartScenarioInPlace(cache.ped, Config.Scenario, 0, true)
+  TaskStartScenarioInPlace(ped, Config.Scenario, 0, true)
   self:StartStateThread(self.session)
 
   return true
@@ -203,8 +216,8 @@ function Binoculars:StartStateThread(session)
     self.scaleforms = scaleforms
 
     while self.inAction and self.session == session and self.camera do
-      if not CanUseBinoculars(cache.ped) then
-        Debug("info", "Auto-exiting binoculars (dead, in vehicle or ragdoll)")
+      if not CanUseBinoculars(PlayerPedId()) or IsPausePressed() then
+        Debug("info", "Auto-exiting binoculars (dead, in vehicle, ragdoll, swimming or ESC)")
         self:DeactivateBinoculars()
         break
       end
@@ -240,7 +253,7 @@ function Binoculars:DeactivateBinoculars()
   SetNightvision(false)
   SetSeethrough(false)
 
-  local ped = cache.ped
+  local ped = PlayerPedId()
   if DoesEntityExist(ped) and not IsEntityDead(ped) and not IsPedInAnyVehicle(ped, false) then
     ClearPedTasks(ped)
   end
@@ -273,7 +286,7 @@ function Binoculars:UpdateCamRotation()
 
     self.camRotation = vector3(newX, 0.0, newZ)
     SetCamRot(self.camera, self.camRotation.x, 0.0, self.camRotation.z, 2)
-    SetEntityRotation(cache.ped, 0.0, 0.0, self.camRotation.z, 2, true)
+    SetEntityRotation(PlayerPedId(), 0.0, 0.0, self.camRotation.z, 2, true)
   end
 end
 
