@@ -11,7 +11,7 @@ A more advanced binoculars resource for your FiveM server, with multiple vision 
 - Framework support (ESX, QBCore, QBX, custom) or standalone via the command
 - Item-based usage, with a separate enhanced item for the special modes
 - Command-based usage
-- Auto-exit on death, entering a vehicle or ragdoll
+- Auto-exit on death, entering a vehicle, ragdoll or swimming; ESC also closes them
 - Realistic camera positioning and movement
 - On-screen controls display
 - Ten locales (ar, de, en, es, fr, nl, pl, pt, ru, sv)
@@ -33,7 +33,7 @@ A more advanced binoculars resource for your FiveM server, with multiple vision 
 
 1. Install ox_lib
 2. Download the latest release and extract it to your resources folder as `force-binoculars`
-3. Add `ensure force-binoculars` to your server.cfg, after `ox_lib` and your framework (ESX, QBCore or QBX are detected automatically; without one the resource runs standalone with commands only)
+3. Add `ensure force-binoculars` to your server.cfg, after `ox_lib` (ESX, QBCore or QBX are detected automatically by the server, whatever the start order; without one the resource runs standalone with commands only)
 4. Add the items to your inventory if you want item-based usage (see below)
 5. Configure the script in `config.lua` (optional)
 
@@ -74,7 +74,7 @@ Config.Binoculars = {
 - `MOUSE WHEEL DOWN/S` - Zoom out
 - `LEFT ARROW` - Previous mode (modes item only)
 - `RIGHT ARROW` - Next mode (modes item only)
-- `BACKSPACE` - Exit binoculars
+- `BACKSPACE` (or ESC) - Exit binoculars
 
 ### Item definitions
 
@@ -121,7 +121,7 @@ If another resource already registers a usable `binoculars` item (for example qb
 exports["force-binoculars"]:ToggleBinoculars(state, useModes)
 
 -- Turn on (no-op if already active). Returns false if the player cannot use
--- binoculars right now (dead, in a vehicle or ragdolling)
+-- binoculars right now (dead, in a vehicle, ragdolling or swimming)
 --- @return boolean success
 exports["force-binoculars"]:ActivateBinoculars(useModes)
 
